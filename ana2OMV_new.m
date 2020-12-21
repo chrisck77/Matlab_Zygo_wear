@@ -159,6 +159,32 @@ vol_segm = NaN(size(AngleGroups2,1),1); %size of the numbe of angle sements
         ZZ_segm_mean = mean(ZZ_segm);
         vol_segm(iGroup2) = -pi * (o_r_in_mm^2 - i_r_in_mm^2) * (ZZ_segm_mean/8000); % volume in mm3
     end;
+    
+%**************************************************************************
+% Volume removed Calculation per segment (360 x 45degrees segments)
+%************************************************************************** 
+%AngleGroups4={[0 45];[45 90];[90 135];[135 180];[-180 -135];[-135 -90];[-90 -45];[-45 0]};
+AngleGroups4 =cell(360,1);
+for i0=1:size(AngleGroups4,1)
+i1 = i0-1;
+i2=i1+45;
+    if i1 >=180;
+        i1 = i1 - 360;
+        i2 = i2-360;
+    end;
+AngleGroups4 {i0} = [i1 i2];
+end;
+
+vol_segm4 = NaN(size(AngleGroups4,1),1); %size of the numbe of angle sements
+    for iGroup4=1:size(AngleGroups4,1)
+        AngleGroup4=AngleGroups4{iGroup4};
+        idxGroupCo4{iGroup4}=find(AA>AngleGroup4(1)&AA<=AngleGroup4(2)&~isnan(ZZ2)&RR>4000&RR<6500); %#ok<AGROW> % find points that lie within arc %M Smith added ZZ>4
+        [RRs4 iSortCo4{iGroup4}]=sort(RR(idxGroupCo4{iGroup4})); %#ok<AGROW>
+        ZZ_segm_4=ZZ2(idxGroupCo4{iGroup4}(iSortCo4{iGroup4}));  
+        ZZ_segm_mean_4 = mean(ZZ_segm_4);
+        vol_segm4(iGroup4) = -pi * (o_r_in_mm^2 - i_r_in_mm^2) * (ZZ_segm_mean_4/8000); % volume in mm3
+    end;    
+    
 %**************************************************************************
 % Seat Profile Lines
 %**************************************************************************     

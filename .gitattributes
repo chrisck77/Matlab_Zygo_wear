@@ -1,2 +1,6 @@
 *.mat binary
 *.p binary
+*.mlx -crlf -diff -merge
+*.fig -crlf -diff -merge
+*.slx -crlf -diff -merge
+*.mdl -crlf -diff -merge
