@@ -163,10 +163,10 @@ switch plotcase
             list_volum2((i+1)/2,ii2+5) = vol_segm (ii2);
           end
           list_volum2((i+1)/2,14) = max(vol_segm) - min(vol_segm);
-          list_volum2((i+1)/2,15) = max(vol_segm4(:,1)) - min(vol_segm4(:,1));
-          list_volum2((i+1)/2,16) = max(vol_segm4(:,2)) - min(vol_segm4(:,2));
-          list_volum2((i+1)/2,17) = max(vol_segm4(:,3)) - min(vol_segm4(:,3));
-          list_volum2((i+1)/2,18) = max(vol_segm4(:,4)) - min(vol_segm4(:,4));
+          list_volum2((i+1)/2,15) = (max(vol_segm4(:,1)) - min(vol_segm4(:,1)))/volum1_1;
+          list_volum2((i+1)/2,16) = (max(vol_segm4(:,2)) - min(vol_segm4(:,2)))/volum1_1;
+          list_volum2((i+1)/2,17) = (max(vol_segm4(:,3)) - min(vol_segm4(:,3)))/volum1_1;
+          list_volum2((i+1)/2,18) = (max(vol_segm4(:,4)) - min(vol_segm4(:,4)))/volum1_1;
                      
           %list_volum2((i+1)/2,14) = max(vol_segm) - min(vol_segm);
           
@@ -185,8 +185,8 @@ switch plotcase
             'OMV material removed', 'OMV alternative calc material removed',...
             'OMV vol segment 0-45','OMV vol segment 45-90','OMV vol segment 90-135','OMV vol segment 135-180',...
             'OMV vol segment 180-225','OMV vol segment 225-270','OMV vol segment 270-315','OMV vol segment 315-360'...
-            'OMV max - min segment','OMV max-min movn avg segment 23','OMV max-min movn avg segment 45',...
-            'OMV max-min movn avg segment 68','OMV max-min movn avg segment 90'};
+            'OMV max - min segment','OMV max-min % movn avg segment 23','OMV max-min % movn avg segment 45',...
+            'OMV max-min % movn avg segment 68','OMV max-min % movn avg segment 90'};
         sheet =1;
         xlswrite(['C:\Data\DAF\Zygo Traces For Matlab\Output\' filename_xls '.xls'],Headers_xls,sheet,'A1');
         xlswrite(['C:\Data\DAF\Zygo Traces For Matlab\Output\' filename_xls '.xls'],list_volum2,sheet,'A2');               
