@@ -2,7 +2,6 @@
 % Read height data
 % note YY and XX reversed to orientate data as on drawing
 %**************************************************************************
-
 [XX YY ZZ Conf]=fnImportZygoPhaseHalf(fnmLift2); %m-file to interpret .dat file 
 
 nrows=size(ZZ,1);nclms=size(ZZ,2);
@@ -12,36 +11,28 @@ pixels_ratio = (XX(end,end)+1)/ nclms;
 %**************************************************************************
 XX=(XX-1)*(Conf.CameraRes*1e6); %CameraRes in is m/pixel x 1000 to convert from m to microns
 YY=(YY-1)*(Conf.CameraRes*1e6); 
-
 %**************************************************************************
 % Give a rough center
 %**************************************************************************
-
 % XX=XX-(nclms-68)*Conf.CameraRes*1e6; %to use with C2 revised lift mask 14/01/2013 %% -68 %%
 % YY=YY-(nrows+10)*Conf.CameraRes*1e6; %% +10 %%
-
 XX=XX - (XX(end,end)/2); %centre cordinates 
 YY=YY - (YY(end,end)/2); 
-
 %**************************************************************************
 % convert to polar coordinates
 %**************************************************************************
-
 [AA RR]=cart2pol(XX,YY); AA=AA*180/pi;
-
 %**************************************************************************
 % find pin points
 %**************************************************************************
-
 %idxPin=find(ZZ<-10);
-
 idxPin=find(ZZ<85);
 %**************************************************************************
 % create vectors of pin which work faster in the angle finding loop below
 %**************************************************************************
 [AA RR]=cart2pol(XX,YY); AA=AA*180/pi; % Convert to polar cordinates :)
 
-Apin=AA(idxPin);
+Apin=AA(idxPin); %5 lines to remove values where Z >=85 and not correct 
 Rpin=RR(idxPin);
 Zpin=ZZ(idxPin);
 Xpin=XX(idxPin);
@@ -57,7 +48,22 @@ XofMax=zeros(size(Angs));
 YofMax=zeros(size(Angs));
 
 %**************************************************************************
-% loop round Angs looking for max lift along radii within an angle range
+% tilt correction in 5 steps around X-axis and Y-axis
+%**************************************************************************
+%Step 1	Measure height points  
+    %a.)along the x-axis from ~1.8 -> 3mm radius
+    %b.)along the y-axis from ~1.8 -> 3mm radius, with negative only y
+    %values (ie bottom half of the y-axis to avoid the large orfice, which
+    %the picture is at the bottom but at this stage is at the top (gets
+    %flipped later)
+%Step 2 fit to a line of best fit (x-axis and y-axis_negative line)
+%Step 3 calculate angle of tilt to push back to x-axis and back to y-axis
+%Step 4	rotate around x-axis
+%Step 5	rotate around y-axis
+[XX_t, YY_t, ZZ_t] = tilt_routine(XX, YY, ZZ, AA, RR);
+
+%**************************************************************************
+% baseline unworn area to 0 for height --> loop round Angs looking for max lift along radii within an angle range
 %**************************************************************************
 
 for Ang=Angs; %loop through all chosen °
@@ -74,13 +80,11 @@ end
 
 Lift=round((-1*median(Zmax)*10))/10; %from each angle slice, find the median seat height
 ZZ=ZZ+Lift; %Zero on seat
-   
+
 %**************************************************************************
 % Plotting main data
 %**************************************************************************
-
 if plotcase==1 || plotcase ==3; 
-% 
      axes(ax(5));
      hold on;
      resolution=1;
@@ -89,9 +93,9 @@ if plotcase==1 || plotcase ==3;
     caxis([-50 1]);hBar=colorbar;
     set(hBar,'ytick',-50:5:1);
     Angles=(0:1:360)*pi/180;
-%     title(test2(1:end-4),'Interpreter','none');
-    
-%     plot(XofMax,YofMax,'color',[0 1 0],'linewidth',2.5);
+    % title(test2(1:end-4),'Interpreter','none');
+    % plot(XofMax,YofMax,'color',[0 1 0],'linewidth',2.5);
+
     AngleGroups={[89 91];[44 46];[-1 1];[-46 -44];[-91 -89];[-136 -134];[179 181];[134 136]}; % define arcs within which to look for seat height
     for iGroup=1:size(AngleGroups,1)
         AngleGroup=AngleGroups{iGroup};
@@ -161,9 +165,8 @@ vol_segm = NaN(size(AngleGroups2,1),1); %size of the numbe of angle sements
     end;
     
 %**************************************************************************
-% Volume removed Calculation per segment (360 x 45degrees segments)
+% Volume removed Calculation per segment (360 x 23, 45,68 & 90 degrees segments)
 %************************************************************************** 
-%AngleGroups4={[0 45];[45 90];[90 135];[135 180];[-180 -135];[-135 -90];[-90 -45];[-45 0]};
 AngleGroups4 =cell(360,4);
 angInc = [23 45 68 90]; %ie 0-23 or 0-45 or --90etc
 vol_segm4 = NaN(size(AngleGroups4,1),size(angInc,2)); %array to put volume values in
@@ -192,41 +195,40 @@ end;
 %**************************************************************************
 % Seat Profile Lines
 %**************************************************************************     
-    AngleGroups3 = AngleGroups;
-    AngleGroups3{5,1}(1) = -79;
-    AngleGroups3{5,1}(2) = -77;
+    %AngleGroups3 = AngleGroups; AngleGroups3{5,1}(1) = -79; AngleGroups3{5,1}(2) = -77; % not used for correcting pink trace and avoiding the orifice
 
     for iGroup=1:size(AngleGroups,1)
         AngleGroup=AngleGroups{iGroup};
+        %all points along a trace line starting just before and ending just after the worn patch at each of the 8 angles
         idxGroupCo{iGroup}=find(AA>AngleGroup(1)&AA<=AngleGroup(2)&~isnan(ZZ)&RR>4000&RR<6500&ZZ<4); %#ok<AGROW> % find points that lie within arc %M Smith added ZZ>4
         [RRs iSortCo{iGroup}]=sort(RR(idxGroupCo{iGroup})); %#ok<AGROW>
-        
-%        idxGroupCo3{iGroup}=find(AA>AngleGroups3(1)&AA<=AngleGroup3(2)&~isnan(ZZ)&RR>4000&RR<6500&ZZ<4); %#ok<AGROW> % find points that lie within arc %M Smith added ZZ>4
- %       [RRs3 iSortCo3{iGroup}]=sort(RR(idxGroupCo3{iGroup})); %#ok<AGROW>
-  %     zeropointZZ=(find(RR(idxGroupCo3{iGroup}(iSortCo3{iGroup}))<4882&RR(idxGroupCo3{iGroup}(iSortCo3{iGroup}))>4852));
-     %  zseat=ZZ(idxGroupCo3{iGroup}(iSortCo3{iGroup}));         
-   
-        % point in the un-worn area, however the large whole sometimes is
-        % captured (on the pink trace) hence different routine for that
-        % igroup
+        %find points that should be 0 for height correction
         zeropointZZ=(find(RR(idxGroupCo{iGroup}(iSortCo{iGroup}))<4882&RR(idxGroupCo{iGroup}(iSortCo{iGroup}))>4852));
         zseat=ZZ(idxGroupCo{iGroup}(iSortCo{iGroup}));
         
+        % idxGroupCo3{iGroup}=find(AA>AngleGroups3(1)&AA<=AngleGroup3(2)&~isnan(ZZ)&RR>4000&RR<6500&ZZ<4); %#ok<AGROW> % find points that lie within arc %M Smith added ZZ>4
+        % [RRs3 iSortCo3{iGroup}]=sort(RR(idxGroupCo3{iGroup})); %#ok<AGROW>
+        % zeropointZZ=(find(RR(idxGroupCo3{iGroup}(iSortCo3{iGroup}))<4882&RR(idxGroupCo3{iGroup}(iSortCo3{iGroup}))>4852));
+        % zseat=ZZ(idxGroupCo3{iGroup}(iSortCo3{iGroup}));            
+        % point in the un-worn area, however the large whole sometimes is captured (on the pink trace) hence different routine for that 
+        
+        % find mean of those 0 points and use to shift trace to 0
         zeronumber=zseat(zeropointZZ,1);
         zeronumber=mean(zeronumber);
-        ZZshift=seat0pt-zeronumber;
-        
+        ZZshift=seat0pt-zeronumber;        
         ZZ(idxGroupCo{iGroup}(iSortCo{iGroup}))=ZZ(idxGroupCo{iGroup}(iSortCo{iGroup}))+ZZshift;
-        
-%         zeropointRR=(find(ZZ(idxGroupCo{iGroup}(iSortCo{iGroup}))<-2&ZZ(idxGroupCo{iGroup}(iSortCo{iGroup}))>-5));
-%         rseat=RR(idxGroupCo{iGroup}(iSortCo{iGroup}));
-%         zeronumberR=rseat(zeropointRR,1);
-%         zeronumberR=mean(zeronumberR);
-%         RRshift=3900-zeronumberR;
-%         RR(idxGroupCo{iGroup}(iSortCo{iGroup}))=RR(idxGroupCo{iGroup}(iSortCo{iGroup}))+RRshift;
-        
+              
     end;
-
+%***** OLD CODE--> was part of seat profile lines--> radius correction --> no longer needed***
+% zeropointRR=(find(ZZ(idxGroupCo{iGroup}(iSortCo{iGroup}))<-2&ZZ(idxGroupCo{iGroup}(iSortCo{iGroup}))>-5));
+% rseat=RR(idxGroupCo{iGroup}(iSortCo{iGroup}));
+% zeronumberR=rseat(zeropointRR,1);
+% zeronumberR=mean(zeronumberR);
+% RRshift=3900-zeronumberR;
+% RR(idxGroupCo{iGroup}(iSortCo{iGroup}))=RR(idxGroupCo{iGroup}(iSortCo{iGroup}))+RRshift;
+%*************************************************************************
+    
+    
 %**************************************************************************
 % Plotting Profile Lines
 %**************************************************************************
