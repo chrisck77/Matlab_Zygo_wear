@@ -48,21 +48,6 @@ XofMax=zeros(size(Angs));
 YofMax=zeros(size(Angs));
 
 %**************************************************************************
-% tilt correction in 5 steps around X-axis and Y-axis
-%**************************************************************************
-%Step 1	Measure height points  
-    %a.)along the x-axis from ~1.8 -> 3mm radius
-    %b.)along the y-axis from ~1.8 -> 3mm radius, with negative only y
-    %values (ie bottom half of the y-axis to avoid the large orfice, which
-    %the picture is at the bottom but at this stage is at the top (gets
-    %flipped later)
-%Step 2 fit to a line of best fit (x-axis and y-axis_negative line)
-%Step 3 calculate angle of tilt to push back to x-axis and back to y-axis
-%Step 4	rotate around x-axis
-%Step 5	rotate around y-axis
-[XX_t, YY_t, ZZ_t] = tilt_routine(XX, YY, ZZ, AA, RR);
-
-%**************************************************************************
 % baseline unworn area to 0 for height --> loop round Angs looking for max lift along radii within an angle range
 %**************************************************************************
 
@@ -80,6 +65,11 @@ end
 
 Lift=round((-1*median(Zmax)*10))/10; %from each angle slice, find the median seat height
 ZZ=ZZ+Lift; %Zero on seat
+
+%**************************************************************************
+% tilt correction in 5 steps around X-axis and Y-axis
+%**************************************************************************
+[XX, YY, ZZ] = tilt_routine(XX, YY, ZZ);
 
 %**************************************************************************
 % Plotting main data

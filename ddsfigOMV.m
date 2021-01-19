@@ -13,7 +13,7 @@ DDSmenu1('init titles on');    % use this to setup menu functions
 
 set(gcf,'paperunits','centimeters');
 set(gcf,'paperorientation','landscape');
-set(gcf,'papersize', [29.6674 20.984]);            %A4
+set(gcf,'papersize', [29.6674 20.984]);            %A4 
 set(gcf,'paperposition',[1.83 2.99 26 15]);        %size to suit space in powerpoint frame  (26cm wide 15cm high
 screen=get(0,'screensize');                       %get users screen size
 set(gcf,'position',[50/1024*screen(3) 150/768*screen(4) 936/1024*screen(3) 540/768*screen(4)]); %set fig according to screen & paper size
